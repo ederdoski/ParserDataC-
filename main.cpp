@@ -24,6 +24,7 @@ const string WHITE_SPACE = " ";
 // Utils
 const int VALUE_TRUE       		   = 1;
 const int QUANTITY_OF_OBJECTS_PER_LIST = 4; 
+const string VALUE_NULL = "null"; 
 
 // Parametros JSON
 const string OBJECT_RECORD		 = "acta";  
@@ -75,6 +76,15 @@ const int ERROR_WRONG_DATE_IN_DELIMITER_ONE = 440;
 const int ERROR_WRONG_DATE_IN_DELIMITER_TWO	= 450; 
 const int ERROR_WRONG_DATE_INVALID       	= 460;
  
+// Mensajes : 
+
+const string ERROR_INVALID_ROUTE  = "Ruta Inexistente"; 
+const string ERROR_INVALID_JSON   = "Json erroneo"; 
+const string FILE_OK              = "Archivo Ok"; 
+const string WRITE_FILE_PATH      = "Escriba la direccion donde se encuentra el archivo JSON a parsear"; 
+
+
+
 // Una forma mas corta de imprimir cosas en consola
 
 void print(string data) {
@@ -384,16 +394,19 @@ string formatData(string json) {
 /* 
 	Metodo encargado de leer el archivo de entrada linea a linea 
     para retornarlo en una variable una vez complete la lectura
+    
+    @Params
+    path: Ruta donde se encuentra el archivo a buscar
 */
-string readJSONFile() {
+string readJSONFile(string path) {
   string jsonString;
   char cadena[254];
-  ifstream fe("C:/Users/Eder/Desktop/data.json");
-  while (!fe.eof()) {
-    fe >> cadena;
+  ifstream file(path.c_str());
+  while (!file.eof()) {
+    file >> cadena;
     jsonString = jsonString + cadena;
   }
-  fe.close();
+  file.close();
   return jsonString;
 }
 
@@ -548,26 +561,52 @@ void createCSV(string *aParameters) {
     file.close();
 }
 
+/* 
+	Metodo encargado de pedirle al usuario la ruta de acceso para buscar el JSON
+	y devolverla en una variable para su uso futuro, devolvera la ruta si esta es valida
+	en caso contrario devuelve null
+*/
+string getFilePath() {
+	string filePath;
+	print(WRITE_FILE_PATH);
+	cin >> filePath;
+	
+	ifstream f(filePath.c_str());
+    if(f.good()) {
+    	return filePath;
+	}else{
+		return VALUE_NULL;
+	}
+}
+
 int main(int argc, char** argv) {
     setlocale(LC_ALL, "");
 	string json;
+	string filePath;
 	
-	try {
-		json = readJSONFile();
-		json = formatData(json);
-		
-		string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
-	    
-	    if(isDataRight(aParameters)) {
-	    	createCSV(aParameters);
-	    	print("Archivo Ok");
-		}else{
-			print("Json erroneo");
+	filePath = getFilePath();
+	
+	if(filePath == VALUE_NULL){
+		print(ERROR_INVALID_ROUTE);
+	}else{
+		try {
+			json = readJSONFile(filePath);
+			json = formatData(json);
+			
+			string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
+		    
+		    if(isDataRight(aParameters)) {
+		    	createCSV(aParameters);
+		    	print(FILE_OK);
+			}else{
+				print(ERROR_INVALID_JSON);
+			}
+		}
+		catch (...) {
+		  print(ERROR_INVALID_JSON);
 		}
 	}
-	catch (...) {
-	  print("Json erroneo");
-	}
+
 	
 }
 
@@ -584,7 +623,7 @@ Errores:
 
 - Validar si faltan campos 
 
-- contar con un metodo las llaves, si es par las llaves estan bien 
+- contar con un metodo las llaves, si es par las llaves estan bien (actualmente parsea la info igual y sale mal)
 
 ------------------------------------------------------
 
