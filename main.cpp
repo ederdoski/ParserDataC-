@@ -21,7 +21,8 @@ const string LIMIT_TWO = "\",\"";
 const string COMMA = ","; 
 const string WHITE_SPACE = " "; 
 
-
+// Utils
+const int VALUE_TRUE       		   = 1;
 const int QUANTITY_OF_OBJECTS_PER_LIST = 4; 
 
 // Parametros JSON
@@ -65,13 +66,14 @@ const string ERROR_WRONG_MODALITY		 	    = "CODE_100";
 const string ERROR_WRONG_NO_NUMERIC_NOTE 		= "CODE_200"; 
 const string ERROR_WRONG_NUMERIC_NOTE 			= "CODE_300"; 
 const string ERROR_WRONG_NUMERIC_NOTE_DECIMALS  = "CODE_350"; 
-const string ERROR_WRONG_DATE_IN_PARAMS			= "CODE_400"; 
-const string ERROR_WRONG_DATE_IN_DAY			= "CODE_410"; 
-const string ERROR_WRONG_DATE_IN_MONTH			= "CODE_420"; 
-const string ERROR_WRONG_DATE_IN_YEAR			= "CODE_430"; 
-const string ERROR_WRONG_DATE_IN_DELIMITER_ONE  = "CODE_440"; 
-const string ERROR_WRONG_DATE_IN_DELIMITER_TWO	= "CODE_450"; 
-const string ERROR_WRONG_DATE_INVALID       	= "CODE_460";
+
+const int ERROR_WRONG_DATE_IN_PARAMS		= 400; 
+const int ERROR_WRONG_DATE_IN_DAY			= 410; 
+const int ERROR_WRONG_DATE_IN_MONTH			= 420; 
+const int ERROR_WRONG_DATE_IN_YEAR			= 430; 
+const int ERROR_WRONG_DATE_IN_DELIMITER_ONE = 440; 
+const int ERROR_WRONG_DATE_IN_DELIMITER_TWO	= 450; 
+const int ERROR_WRONG_DATE_INVALID       	= 460;
  
 // Una forma mas corta de imprimir cosas en consola
 
@@ -153,12 +155,12 @@ string checkNoNumericNote(string note) {
 string checkNumericNote(string note) {
 	int havePoint = note.find(".");
 	int haveComma = note.find(",");
-
-	if(havePoint == -1 || haveComma == -1) {
+	
+	if(havePoint != -1 || haveComma != -1) {
 		return ERROR_WRONG_NUMERIC_NOTE_DECIMALS;
 	}else{
 		int noteInt = atoi(note.c_str());			
-		if(noteInt > 0 && noteInt < 10){
+		if(noteInt >= 0 && noteInt <= 10){
 			return note;
 		}else{
 			return ERROR_WRONG_NUMERIC_NOTE;
@@ -205,14 +207,14 @@ bool isValidDate(int day, int month, int year)
 	if(month == 2) {	
 		if (year % 4 == 0) 
 		{
-			if( day > 29 || day < 0)
+			if( day > 29 || day <= 0)
 			{
 				return false;
 			}
 		}
 		else
 		{
-			if( day > 28 || day < 0)
+			if( day > 28 || day <= 0)
 			 {
 				return false;
 			}
@@ -220,13 +222,13 @@ bool isValidDate(int day, int month, int year)
 	}
 	else if(month == 1 || month == 3 || month  == 5 || month == 7 || month == 8 || month == 10 || month == 12)
 	{
-		if(day > 31 || day < 0) {
+		if(day > 31 || day <= 0) {
 			return false;
 		}
 	}
 	else
 	{
-		if(day > 30 || day < 0){
+		if(day > 30 || day <= 0){
 			return false;
 		}
 	}
@@ -239,7 +241,7 @@ bool isValidDate(int day, int month, int year)
 	@Params
 	date: Fecha en formato dd/mm/yy
 */
-string checkDate(string date) {
+int checkDate(string date) {
 	if(date.length() == 8) {
 		if(isNumber(date.substr(0, 1)) && isNumber(date.substr(1, 1))) {
 			if(date.substr(2, 1) == "/") {
@@ -251,7 +253,7 @@ string checkDate(string date) {
 							int year  = atoi(date.substr(6, 2).c_str());		
 						    
 							if(isValidDate(day, month, year)) {
-								return "TRUE";
+								return VALUE_TRUE;
 							}else{
 								return ERROR_WRONG_DATE_INVALID;
 							}
@@ -305,10 +307,7 @@ boolean isDataRight(string *aParameters) {
 		print("ERROR: La nota numerica ingresada no cumple con el criterio de aceptacion: Posee decimales, valor: "+ aParameters[12]);
 	}
 	
-	//REVISAR
-	string auxDateResponse = checkDate(aParameters[5]);
-	print(auxDateResponse);
-	/*switch(auxDateResponse) {
+	switch(checkDate(aParameters[5])) {
 	    case ERROR_WRONG_DATE_IN_PARAMS:
 	      print("ERROR: Fecha corrupta, valor: "+ aParameters[5]);
 	      isDataSuccess = false;
@@ -337,7 +336,7 @@ boolean isDataRight(string *aParameters) {
 	      print("ERROR: Fecha invalida, valor: "+ aParameters[5]);
 	      isDataSuccess = false;
 	      break; 
-	}*/
+	}
 	
 	return isDataSuccess;
 }
