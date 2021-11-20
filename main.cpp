@@ -80,6 +80,8 @@ const int ERROR_WRONG_DATE_INVALID       	= 460;
 
 const string ERROR_INVALID_ROUTE  = "Ruta Inexistente"; 
 const string ERROR_INVALID_JSON   = "Json erroneo"; 
+const string ERROR_INVALID_OBJECT = "Error: Esta estructura posee inconsistencias en los objetos { }"; 
+const string ERROR_INVALID_ARRAY  = "Error: Esta estructura posee inconsistencias en las llaves [ ]"; 
 const string FILE_OK              = "Archivo Ok"; 
 const string WRITE_FILE_PATH      = "Escriba la direccion donde se encuentra el archivo JSON a parsear"; 
 
@@ -96,20 +98,22 @@ void print(int data) {
 }
 
 /* 
-   Metodo encargado de verificar que un directrorio exista
-    
-   @Params
-   directory: direccion del directorio al que accedes
+	Metodo encargado de pedirle al usuario la ruta de acceso para buscar el JSON
+	y devolverla en una variable para su uso futuro, devolvera la ruta si esta es valida
+	en caso contrario devuelve null
 */
-/*boolean isValidDirectory(string directory){
-	string filePath= "C:\Temp\myExample.txt";
-	std::ifstream exist(filePath); 
-	if (!exist) {
-		return false;
+string getFilePath() {
+	string filePath;
+	print(WRITE_FILE_PATH);
+	cin >> filePath;
+	
+	ifstream f(filePath.c_str());
+    if(f.good()) {
+    	return filePath;
 	}else{
-		return true;
+		return VALUE_NULL;
 	}
-}*/
+}
 
 /* 
    Metodo encargado remover los caracteres especiales que tiene un parametro
@@ -466,8 +470,7 @@ string getObject(string json, string key, int occurence) {
   Object: JsonObject a parsear
   key: Nombre del parametro a buscar	
  */
-string getKey(string object, string key) {
-	
+string getKey(string object, string key) {	
 	string query;
 	string dirtyQuery;
 	
@@ -562,21 +565,49 @@ void createCSV(string *aParameters) {
 }
 
 /* 
-	Metodo encargado de pedirle al usuario la ruta de acceso para buscar el JSON
-	y devolverla en una variable para su uso futuro, devolvera la ruta si esta es valida
-	en caso contrario devuelve null
+	Metodo encargado de verificar la estructura de los objetos y las llaves
+	en caso de que no coincidan devolvera un error
+   
+  @Params
+  *json : string con la data a parsear 
 */
-string getFilePath() {
-	string filePath;
-	print(WRITE_FILE_PATH);
-	cin >> filePath;
+string checkStructureOfJSON(string json) {
 	
-	ifstream f(filePath.c_str());
-    if(f.good()) {
-    	return filePath;
-	}else{
-		return VALUE_NULL;
+	int quantityOfObjectDelimiterStart = 0;
+	int quantityOfObjectDelimiterEnd = 0;
+	int quantityOfArrayDelimiterStart = 0;
+	int quantityOfArrayDelimiterEnd = 0;
+	string error = VALUE_NULL;
+			
+	for (int i = 0; i < json.length()-1; i++) {
+		char aux = json[i];
+	  	
+	  	if(aux == '{') {
+  			quantityOfObjectDelimiterStart++;
+		}	
+		
+		if(aux == '}') {
+			quantityOfObjectDelimiterEnd++;
+		}
+		
+		if(aux == '[') {
+			quantityOfArrayDelimiterStart++;
+		}
+		
+		if(aux == ']') {
+			quantityOfArrayDelimiterEnd++;
+		}
 	}
+	
+	if(quantityOfObjectDelimiterStart != quantityOfObjectDelimiterEnd) {
+		error = ERROR_INVALID_OBJECT;
+	}
+	
+	if(quantityOfArrayDelimiterStart != quantityOfArrayDelimiterEnd) {
+		error = ERROR_INVALID_ARRAY;
+	}
+	
+	return error;
 }
 
 int main(int argc, char** argv) {
@@ -584,7 +615,9 @@ int main(int argc, char** argv) {
 	string json;
 	string filePath;
 	
+	
 	filePath = getFilePath();
+	json = readJSONFile("C:/Users/Eder/Desktop/data.json");
 	
 	if(filePath == VALUE_NULL){
 		print(ERROR_INVALID_ROUTE);
@@ -593,37 +626,36 @@ int main(int argc, char** argv) {
 			json = readJSONFile(filePath);
 			json = formatData(json);
 			
-			string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
-		    
-		    if(isDataRight(aParameters)) {
-		    	createCSV(aParameters);
-		    	print(FILE_OK);
+			string jsonErrors = checkStructureOfJSON(json);
+			
+			if(jsonErrors == VALUE_NULL) {	
+				string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
+			    
+			    if(isDataRight(aParameters)) {
+			    	createCSV(aParameters);
+			    	print(FILE_OK);
+				}else{
+					print(ERROR_INVALID_JSON);
+				}
 			}else{
-				print(ERROR_INVALID_JSON);
+				print(jsonErrors);
 			}
 		}
 		catch (...) {
 		  print(ERROR_INVALID_JSON);
 		}
 	}
-
-	
 }
 
 /*
 
 TODO: 
 
-- Falta recibir la ruta del archivo por parametro 
-
 - especificacion ebnf 
-
 
 Errores:
 
 - Validar si faltan campos 
-
-- contar con un metodo las llaves, si es par las llaves estan bien (actualmente parsea la info igual y sale mal)
 
 ------------------------------------------------------
 
