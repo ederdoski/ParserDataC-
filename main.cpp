@@ -84,7 +84,7 @@ const string ERROR_INVALID_OBJECT = "Error: Esta estructura posee inconsistencia
 const string ERROR_INVALID_ARRAY  = "Error: Esta estructura posee inconsistencias en las llaves [ ]"; 
 const string FILE_OK              = "Archivo Ok"; 
 const string WRITE_FILE_PATH      = "Escriba la direccion donde se encuentra el archivo JSON a parsear"; 
-
+const string ERROR_MISSING_FIELD_JSON   = "Error: Faltan campos en el json"; 
 
 
 // Una forma mas corta de imprimir cosas en consola
@@ -306,9 +306,11 @@ boolean isDataRight(string *aParameters) {
 		print("ERROR: LA modalidad ingresada no cumple con el criterio de aceptacion, valor: "+ aParameters[7]);
 	}
 	
-	if(checkNoNumericNote(aParameters[11]) == ERROR_WRONG_NO_NUMERIC_NOTE) {
-		isDataSuccess = false;
-		print("ERROR: LA nota no numerica ingresada no cumple con el criterio de aceptacion, valor: "+ aParameters[11]);
+	if(aParameters[11] != WHITE_SPACE) {
+		if(checkNoNumericNote(aParameters[11]) == ERROR_WRONG_NO_NUMERIC_NOTE) {
+			isDataSuccess = false;
+			print("ERROR: LA nota no numerica ingresada no cumple con el criterio de aceptacion, valor: "+ aParameters[11]);
+		}
 	}
 	
 	if(checkNumericNote(aParameters[12]) == ERROR_WRONG_NUMERIC_NOTE) {
@@ -507,7 +509,7 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 		
 		string object;
 		int ocurrencePosition = *(aOcurrences + i);
-		
+		 
 		switch(i) {
 		    case 0:
 		      object = getObject(json, OBJECT_RECORD, ocurrencePosition);
@@ -524,7 +526,7 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 		      object = getObject(json, OBJECT_JUDGE, ocurrencePosition);
 		      aParameters[8] = getKey(object, VALUE_JUDGE_TUTOR);	
 		      aParameters[9] = getKey(object, VALUE_JUDGE_ONE);	
-		      aParameters[10] = getKey(object, VALUE_JUDGE_TWO);	
+		      aParameters[10] = getKey(object, VALUE_JUDGE_TWO);
 		      break; 
 		    case 3:
 		      object = getObject(json, VALUE_DATE, ocurrencePosition);
@@ -534,10 +536,20 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 		      object = getObject(json, VALUE_MODE, ocurrencePosition);
 		      aParameters[7] = getKey(object, VALUE_MODE);		      	      
 		      break; 
-		     case 4:
+		     case 4:	
 		      object = getObject(json, OBJECT_NOTE, ocurrencePosition);
-		      aParameters[11] = getKey(object, VALUE_NOTE_NO_NUMERIC);	
-		      aParameters[12] = getKey(object, VALUE_NOTE_NUMERIC);	
+			  
+			  try{
+			     aParameters[11] = getKey(object, VALUE_NOTE_NO_NUMERIC);
+			  }catch (...) {
+				 aParameters[11] = WHITE_SPACE;
+			  }
+			  
+			  try{
+		      	 aParameters[12] = getKey(object, VALUE_NOTE_NUMERIC);	
+			  }catch (...) {
+				 aParameters[12] = WHITE_SPACE;
+			  }
 		      break; 
 		}
 	}
@@ -553,8 +565,23 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 */
 void createCSV(string *aParameters) {
 	
+	print(aParameters[0]);
+	print(aParameters[1]);
+	print(aParameters[2]);
+	print(aParameters[3]);
+	print(aParameters[4]);
+	print(aParameters[5]);
+	print(aParameters[6]);
+	print(aParameters[7]);
+	print(aParameters[8]);
+	print(aParameters[9]);
+	print(aParameters[10]);
+	print(aParameters[11]);
+	print(aParameters[12]);
+		
+	
     std::ofstream file("C:/Users/Eder/Desktop/salidaDatos.csv");
-    
+	
 	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
 				  aParameters[3] + WHITE_SPACE + "<" + aParameters[4] + ">"+ COMMA + WHITE_SPACE + aParameters[5] + COMMA + WHITE_SPACE +
 	 			  aParameters[6] + COMMA +  WHITE_SPACE + aParameters[7] + COMMA +  WHITE_SPACE + aParameters[8] + WHITE_SPACE + aParameters[9] +
@@ -579,7 +606,7 @@ string checkStructureOfJSON(string json) {
 	int quantityOfArrayDelimiterEnd = 0;
 	string error = VALUE_NULL;
 			
-	for (int i = 0; i < json.length()-1; i++) {
+	for (int i = 0; i < json.length(); i++) {
 		char aux = json[i];
 	  	
 	  	if(aux == '{') {
@@ -606,7 +633,7 @@ string checkStructureOfJSON(string json) {
 	if(quantityOfArrayDelimiterStart != quantityOfArrayDelimiterEnd) {
 		error = ERROR_INVALID_ARRAY;
 	}
-	
+
 	return error;
 }
 
@@ -642,7 +669,7 @@ int main(int argc, char** argv) {
 			}
 		}
 		catch (...) {
-		  print(ERROR_INVALID_JSON);
+		  print(ERROR_MISSING_FIELD_JSON);
 		}
 	}
 }
@@ -651,17 +678,14 @@ int main(int argc, char** argv) {
 
 TODO: 
 
+- salida de datos en el mismo sitio que los tomo
 - especificacion ebnf 
+
+- soporte para varios registros
 
 Errores:
 
-- Validar si faltan campos 
-
-------------------------------------------------------
-
-- nota puede ser que venga una o ambas
-
-- soporte para varios registros
+- Elementos en desorde hay error.
  
  */
 
