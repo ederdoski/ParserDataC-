@@ -24,7 +24,7 @@ const string WHITE_SPACE = " ";
 // Utils
 const int VALUE_TRUE       		   = 1;
 const int QUANTITY_OF_OBJECTS_PER_LIST = 4; 
-const string VALUE_NULL = "null"; 
+const string EMPTY = ""; 
 
 // Parametros JSON
 const string OBJECT_RECORD		 = "acta";  
@@ -111,7 +111,7 @@ string getFilePath() {
     if(f.good()) {
     	return filePath;
 	}else{
-		return VALUE_NULL;
+		return EMPTY;
 	}
 }
 
@@ -556,31 +556,28 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 	return aParameters;
 }
 
+string getBasePath(string filePath) {
+	string directory;
+	const size_t last_slash_idx = filePath.rfind('\\');
+	if (std::string::npos != last_slash_idx)
+	{
+	    directory = filePath.substr(0, last_slash_idx);
+	}
+	print(directory);
+}
+
 /* 
 	Metodo encargado de crear un archivo csv y escribir en el todos los parametros en el
 	orden que requerido para hacer el input del proyecto.
    
   @Params
   *aParameters : Array con todas los valores de los parametros JSON
+  *filePath: Direccion donde se creara el archivo de salida
 */
-void createCSV(string *aParameters) {
+void createCSV(string filePath, string *aParameters) {
 	
-	print(aParameters[0]);
-	print(aParameters[1]);
-	print(aParameters[2]);
-	print(aParameters[3]);
-	print(aParameters[4]);
-	print(aParameters[5]);
-	print(aParameters[6]);
-	print(aParameters[7]);
-	print(aParameters[8]);
-	print(aParameters[9]);
-	print(aParameters[10]);
-	print(aParameters[11]);
-	print(aParameters[12]);
-		
-	
-    std::ofstream file("C:/Users/Eder/Desktop/salidaDatos.csv");
+    string path = filePath+ "/salidaDatos.csv";
+	std::ofstream file(path.c_str());
 	
 	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
 				  aParameters[3] + WHITE_SPACE + "<" + aParameters[4] + ">"+ COMMA + WHITE_SPACE + aParameters[5] + COMMA + WHITE_SPACE +
@@ -604,7 +601,7 @@ string checkStructureOfJSON(string json) {
 	int quantityOfObjectDelimiterEnd = 0;
 	int quantityOfArrayDelimiterStart = 0;
 	int quantityOfArrayDelimiterEnd = 0;
-	string error = VALUE_NULL;
+	string error = EMPTY;
 			
 	for (int i = 0; i < json.length(); i++) {
 		char aux = json[i];
@@ -642,11 +639,10 @@ int main(int argc, char** argv) {
 	string json;
 	string filePath;
 	
-	
 	filePath = getFilePath();
-	json = readJSONFile("C:/Users/Eder/Desktop/data.json");
+	json = readJSONFile(filePath);
 	
-	if(filePath == VALUE_NULL){
+	if(filePath == EMPTY){
 		print(ERROR_INVALID_ROUTE);
 	}else{
 		try {
@@ -655,11 +651,11 @@ int main(int argc, char** argv) {
 			
 			string jsonErrors = checkStructureOfJSON(json);
 			
-			if(jsonErrors == VALUE_NULL) {	
+			if(jsonErrors == "") {	
 				string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
 			    
 			    if(isDataRight(aParameters)) {
-			    	createCSV(aParameters);
+			    	createCSV(filePath, aParameters);
 			    	print(FILE_OK);
 				}else{
 					print(ERROR_INVALID_JSON);
@@ -677,8 +673,8 @@ int main(int argc, char** argv) {
 /*
 
 TODO: 
-
-- salida de datos en el mismo sitio que los tomo
+	
+- salida de datos en el mismo sitio que los tomo FUNCION GET BASE PATH
 - especificacion ebnf 
 
 - soporte para varios registros
