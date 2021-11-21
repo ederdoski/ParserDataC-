@@ -99,8 +99,8 @@ void print(int data) {
 
 /* 
 	Metodo encargado de pedirle al usuario la ruta de acceso para buscar el JSON
-	y devolverla en una variable para su uso futuro, devolvera la ruta si esta es valida
-	en caso contrario devuelve null
+	y devolverla en una variable para su uso futuro, devolvera la ruta si esta posee
+	un archivo json valido en caso contrario devuelve null
 */
 string getFilePath() {
 	string filePath;
@@ -108,11 +108,34 @@ string getFilePath() {
 	cin >> filePath;
 	
 	ifstream f(filePath.c_str());
-    if(f.good()) {
-    	return filePath;
+    if(f.good()) {	
+    	if(filePath.find(".json")){
+    		return filePath;
+		}else{
+			return EMPTY;
+		}
 	}else{
 		return EMPTY;
 	}
+}
+
+/* 
+	Metodo encargado de tomar la ruta base y limpiarala para 
+	crear el archivo de salida en el mismo sitio que el de entrada
+   
+  @Params
+  *filename: Direccion del archivo base
+*/
+string getBasePath(string filename) {
+	const size_t last_slash_idx = filename.find_last_of("\\/");
+	const size_t period_idx = filename.rfind('.');
+	
+	if (std::string::npos != period_idx)
+	{
+	    filename.erase(period_idx);
+	}
+	
+	return filename;
 }
 
 /* 
@@ -556,25 +579,13 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 	return aParameters;
 }
 
-string getBasePath(string filename) {
-	const size_t last_slash_idx = filename.find_last_of("\\/");
-	const size_t period_idx = filename.rfind('.');
-	
-	if (std::string::npos != period_idx)
-	{
-	    filename.erase(period_idx);
-	}
-	
-	return filename;
-}
-
 /* 
 	Metodo encargado de crear un archivo csv y escribir en el todos los parametros en el
 	orden que requerido para hacer el input del proyecto.
    
   @Params
   *aParameters : Array con todas los valores de los parametros JSON
-  *filePath: Direccion donde se creara el archivo de salida
+  filePath: Direccion donde se creara el archivo de salida
 */
 void createCSV(string filePath, string *aParameters) {
 	
@@ -591,7 +602,7 @@ void createCSV(string filePath, string *aParameters) {
 	file << data;
     file.close();
     
-    print("Archivo OK, salida CSV creada en"+ path);
+    print("Archivo OK, salida CSV creada en "+ path);
 }
 
 /* 
@@ -599,7 +610,7 @@ void createCSV(string filePath, string *aParameters) {
 	en caso de que no coincidan devolvera un error
    
   @Params
-  *json : string con la data a parsear 
+  json : string con la data a parsear 
 */
 string checkStructureOfJSON(string json) {
 	
@@ -640,6 +651,38 @@ string checkStructureOfJSON(string json) {
 	return error;
 }
 
+/* 
+	Metodo encargado de verificar la estructura de los objetos y las llaves
+	en caso de que no coincidan devolvera un error
+   
+  @Params
+  json : string con la data a parsear 
+  filePath: Direccion donde se leera el archivo de entrada
+*/
+void initFlowParseJson(string filePath, string json) {
+	try {
+		json = readJSONFile(filePath);
+		json = formatData(json);
+		
+		string jsonErrors = checkStructureOfJSON(json);
+		
+		if(jsonErrors == "") {	
+			string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
+		    
+		    if(isDataRight(aParameters)) {
+		    	createCSV(filePath, aParameters);
+			}else{
+				print(ERROR_INVALID_JSON);
+			}
+		}else{
+			print(jsonErrors);
+		}
+	}
+	catch (...) {
+	  print(ERROR_MISSING_FIELD_JSON);
+	}
+}
+
 int main(int argc, char** argv) {
     setlocale(LC_ALL, "");
 	string json;
@@ -647,40 +690,20 @@ int main(int argc, char** argv) {
 	
 	filePath = getFilePath();
 	
-	json = readJSONFile(filePath);
-	
 	if(filePath == EMPTY){
 		print(ERROR_INVALID_ROUTE);
 	}else{
-		try {
-			json = readJSONFile(filePath);
-			json = formatData(json);
-			
-			string jsonErrors = checkStructureOfJSON(json);
-			
-			if(jsonErrors == "") {	
-				string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
-			    
-			    if(isDataRight(aParameters)) {
-			    	createCSV(filePath, aParameters);
-				}else{
-					print(ERROR_INVALID_JSON);
-				}
-			}else{
-				print(jsonErrors);
-			}
-		}
-		catch (...) {
-		  print(ERROR_MISSING_FIELD_JSON);
-		}
+		json = readJSONFile(filePath);
+		initFlowParseJson(filePath, json);
 	}
+	
+	system("pause");
 }
 
 /*
 
 TODO: 
-	
-- salida de datos en el mismo sitio que los tomo FUNCION GET BASE PATH
+
 - especificacion ebnf 
 
 - soporte para varios registros
