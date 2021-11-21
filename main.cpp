@@ -556,14 +556,16 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 	return aParameters;
 }
 
-string getBasePath(string filePath) {
-	string directory;
-	const size_t last_slash_idx = filePath.rfind('\\');
-	if (std::string::npos != last_slash_idx)
+string getBasePath(string filename) {
+	const size_t last_slash_idx = filename.find_last_of("\\/");
+	const size_t period_idx = filename.rfind('.');
+	
+	if (std::string::npos != period_idx)
 	{
-	    directory = filePath.substr(0, last_slash_idx);
+	    filename.erase(period_idx);
 	}
-	print(directory);
+	
+	return filename;
 }
 
 /* 
@@ -576,7 +578,9 @@ string getBasePath(string filePath) {
 */
 void createCSV(string filePath, string *aParameters) {
 	
-    string path = filePath+ "/salidaDatos.csv";
+	
+    string path = getBasePath(filePath) + "Formateada.csv";
+    
 	std::ofstream file(path.c_str());
 	
 	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
@@ -586,6 +590,8 @@ void createCSV(string filePath, string *aParameters) {
 	
 	file << data;
     file.close();
+    
+    print("Archivo OK, salida CSV creada en"+ path);
 }
 
 /* 
@@ -640,6 +646,7 @@ int main(int argc, char** argv) {
 	string filePath;
 	
 	filePath = getFilePath();
+	
 	json = readJSONFile(filePath);
 	
 	if(filePath == EMPTY){
@@ -656,7 +663,6 @@ int main(int argc, char** argv) {
 			    
 			    if(isDataRight(aParameters)) {
 			    	createCSV(filePath, aParameters);
-			    	print(FILE_OK);
 				}else{
 					print(ERROR_INVALID_JSON);
 				}
