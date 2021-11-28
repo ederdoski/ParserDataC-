@@ -54,6 +54,8 @@ const string VALUE_NOTE_NUMERIC      = "numerica";
 const string VALUE_MODE_INVESTIGATION	= "Investigación";  
 const string VALUE_MODE_INTERNSHIP   	= "Pasantía"; 
 const string VALUE_MODE_CEG		 		= "CEG"; 
+const string VALUE_MODE_INVESTIGATION_WITHOUT_ACCENT	= "Investigacion";  
+const string VALUE_MODE_INTERNSHIP_WITHOUT_INTERSHIP   	= "Pasantia"; 
 
 // Tipos de Nota no numerica
 
@@ -179,7 +181,7 @@ string cleanString(string data) {
    modality: string con el parametro a verificar
 */
 string checkModality(string modality) {
-	if(modality == VALUE_MODE_INVESTIGATION || modality == VALUE_MODE_INTERNSHIP || modality == VALUE_MODE_CEG ) {
+	if(modality == VALUE_MODE_INVESTIGATION || modality == VALUE_MODE_INVESTIGATION_WITHOUT_ACCENT || modality == VALUE_MODE_INTERNSHIP || modality == VALUE_MODE_INTERNSHIP_WITHOUT_INTERSHIP || modality == VALUE_MODE_CEG ) {
 		return modality;
 	}else{
 		return ERROR_WRONG_MODALITY;
@@ -410,7 +412,6 @@ boolean isDataRight(string *aParameters) {
 string formatData(string json) {
 	
 	string jsonFormat;
-	
 	for (int i = 0; i < json.length(); i++) {
 		char val = json[i];
   		if(val == 'Ã') {
@@ -418,25 +419,39 @@ string formatData(string json) {
 			    case '¡'  :
 			      jsonFormat = json.replace(i,2, "á"); 
 			      break;
+			    case ''  :
+			      jsonFormat = json.replace(i,2, "Á"); 
+			    break;
 			    case '©'  :
 			      jsonFormat = json.replace(i,2, "é"); 
-			      break; 
+			    break; 
+			    case '‰'  :
+			      jsonFormat = json.replace(i,2, "É"); 
+			    break; 
 				case '­'  :
 			      jsonFormat = json.replace(i,2, "í"); 
-			      break; 
+			    break; 
+			    case ''  :
+			      jsonFormat = json.replace(i,2, "Í"); 
+			    break; 
 			    case '³'  :
 			      jsonFormat = json.replace(i,2, "ó"); 
-			      break; 
+			    break; 
+			    case '“'  :
+			      jsonFormat = json.replace(i,2, "Ó"); 
+			    break; 
 			    case 'º'  :
 			      jsonFormat = json.replace(i,2, "ú"); 
-			      break; 
+			    break; 
+			    case 'š'  :
+			      jsonFormat = json.replace(i,2, "Ú"); 
+			    break;
 			    case '±'  :
 			      jsonFormat = json.replace(i,2, "ñ"); 
-			      break; 
+			    break; 
 			}
   		}
 	}
-		
 	return jsonFormat;
 }
 
