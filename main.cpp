@@ -543,16 +543,23 @@ string getKey(string object, string key) {
   json: String con la data a parsear
 */
 
-string *getArrayOfParameters(int *aOcurrences, string json) {
+string *getArrayOfParameters(int *aOcurrences, string json, boolean isFirstObject) {
 	
 	static string aParameters[13];
 	
 	for (int i = 0; i <= QUANTITY_OF_OBJECTS_PER_LIST; i++) {
 		
 		string object;
-		int ocurrencePosition = *(aOcurrences + i);
+		int ocurrencePosition;
 		
-		switch(i) {
+		if(isFirstObject){
+			ocurrencePosition =	aOcurrences[i+1];
+		}else{
+			ocurrencePosition =	aOcurrences[i];
+		}
+		
+		switch(i) 
+		{
 		    case 0:
 		      object = getObject(json, OBJECT_RECORD, ocurrencePosition);
 		      aParameters[0] = getKey(object, VALUE_RECORD_YEAR);
@@ -638,24 +645,6 @@ void createCSV(string filePath, string *aInfoToSave, int aInfoToSaveLenght) {
     print("Archivo OK, salida CSV creada en "+ path);
 }
 
-void createCSVForUniqueJsonObject(string filePath, string *aParameters) {
-	
-	
-    string path = getBasePath(filePath) + "Formateada.csv";
-    
-	std::ofstream file(path.c_str());
-  
-	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
-				  aParameters[3] + WHITE_SPACE + "<" + aParameters[4] + ">"+ COMMA + WHITE_SPACE + aParameters[5] + COMMA + WHITE_SPACE +
-	 			  aParameters[6] + COMMA +  WHITE_SPACE + aParameters[7] + COMMA +  WHITE_SPACE + aParameters[8] + WHITE_SPACE + aParameters[9] +
-	  			  WHITE_SPACE + aParameters[10] + COMMA + WHITE_SPACE + aParameters[11] + WHITE_SPACE + aParameters[12]; 
-	
-	file << data;
-    file.close();
-    
-    print("Archivo OK, salida CSV creada en "+ path);
-}
-
 /* 
 	Metodo encargado de verificar la estructura de los objetos y las llaves
 	en caso de que no coincidan devolvera un error
@@ -717,8 +706,13 @@ void getDataOfJsonObjectFlow(string filePath, string *json, int aObjectsLenght) 
 	int aInfoToSaveLenght = 0;
 	string *aParameters;
 	
-	for (int i = 0; i <= aObjectsLenght-1; i++) {	
-		aParameters = getArrayOfParameters(getOcurrecePositions(json[i]), json[i]);
+	for (int i = 0; i <= aObjectsLenght-1; i++) {
+		
+		if(i == 0){
+			aParameters = getArrayOfParameters(getOcurrecePositions(json[i]), json[i], true);
+		}else{
+			aParameters = getArrayOfParameters(getOcurrecePositions(json[i]), json[i], false);
+		}
 			
 		if(isDataRight(aParameters)) {
 		 	aInfoToSave[i] = getDataToWriteInExcel(aParameters);
@@ -727,19 +721,9 @@ void getDataOfJsonObjectFlow(string filePath, string *json, int aObjectsLenght) 
 		 	print(ERROR_INVALID_JSON);
 		 	return;
 		}
+		
 	}
 	createCSV(filePath, aInfoToSave, aInfoToSaveLenght);
-}
-
-
-void getDataOfUniqueJsonObjectFlow(string filePath, string json) {
-	string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
-	    
-    if(isDataRight(aParameters)) {
-    	createCSVForUniqueJsonObject(filePath, aParameters);
-	}else{
-		print(ERROR_INVALID_JSON);
-	}
 }
 
 /* 
@@ -813,7 +797,9 @@ void initFlowParseJson(string filePath, string json) {
 			if(isJsonArray(json)){
 				getDataOfJsonArrayFlow(filePath, json);
 			}else{
-				getDataOfUniqueJsonObjectFlow(filePath, json);
+				string aux[1];
+				aux[0] = json;
+				getDataOfJsonObjectFlow(filePath, aux, 1);
 			}
 					
 		}else{
