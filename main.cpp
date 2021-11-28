@@ -98,6 +98,26 @@ void print(int data) {
 }
 
 /* 
+	Metodo encargado de verificar si la estructura de entrada es un JSONArray
+	para parsear los objetos de manera distinta
+	@Params
+    isArray: booleano a returnar
+*/
+boolean isJsonArray(string json) {
+	char firstCharacter= json[0];
+	char lastCharacter= json[json.length()-1];
+	boolean isArray = false;
+	
+	if(firstCharacter == '['){
+		if(lastCharacter == ']'){
+	  		isArray = true;
+		}
+	}
+	
+	return isArray;
+}
+
+/* 
 	Metodo encargado de pedirle al usuario la ruta de acceso para buscar el JSON
 	y devolverla en una variable para su uso futuro, devolvera la ruta si esta posee
 	un archivo json valido en caso contrario devuelve null
@@ -212,8 +232,8 @@ string checkNumericNote(string note) {
 	number: contiene un caracter con el numero a verificar
 */
 boolean isNumber(string number) {
-	string aNumbers[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; 
-	
+	string aNumbers[10] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; 
+
 	for(int i=0; i<=9; i++) {
 		if(number == aNumbers[i]) {
 			return true;
@@ -454,7 +474,6 @@ int * getOcurrecePositions(string json) {
   	
 	for (int i = 0; i < 100; i++) {
 		ocurrence = json.find(SEPARATOR, ocurrence + i);
-		
 		if (ocurrence != string::npos) {
 			if(firstOcurrence == 0) {
 				firstOcurrence = ocurrence;
@@ -532,7 +551,7 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 		
 		string object;
 		int ocurrencePosition = *(aOcurrences + i);
-		 
+		
 		switch(i) {
 		    case 0:
 		      object = getObject(json, OBJECT_RECORD, ocurrencePosition);
@@ -580,20 +599,52 @@ string *getArrayOfParameters(int *aOcurrences, string json) {
 }
 
 /* 
+	Metodo encargado de tomar todos los parametros del array y crear un string limpio
+	que sera enviado al excel para ser guardado
+   
+  @Params
+  *aParameters : Array con todas los valores ordenados en un fomarto RAW 
+*/
+string getDataToWriteInExcel(string *aParameters) {
+	
+	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
+				  aParameters[3] + WHITE_SPACE + "<" + aParameters[4] + ">"+ COMMA + WHITE_SPACE + aParameters[5] + COMMA + WHITE_SPACE +
+	 			  aParameters[6] + COMMA +  WHITE_SPACE + aParameters[7] + COMMA +  WHITE_SPACE + aParameters[8] + WHITE_SPACE + aParameters[9] +
+	  			  WHITE_SPACE + aParameters[10] + COMMA + WHITE_SPACE + aParameters[11] + WHITE_SPACE + aParameters[12]; 
+	return data;		
+}
+
+/* 
 	Metodo encargado de crear un archivo csv y escribir en el todos los parametros en el
 	orden que requerido para hacer el input del proyecto.
    
   @Params
-  *aParameters : Array con todas los valores de los parametros JSON
   filePath: Direccion donde se creara el archivo de salida
+  *aInfoToSave : Array con todas los valores de los parametros JSON formateados
+  y preparados para ser guardados 
+  aInfoToSaveLenght: int que maneja la longitud del array
 */
-void createCSV(string filePath, string *aParameters) {
+void createCSV(string filePath, string *aInfoToSave, int aInfoToSaveLenght) {
+    string path = getBasePath(filePath) + "Formateada.csv";
+	std::ofstream file(path.c_str());
+	for (int i = 0; i <= aInfoToSaveLenght-1; i++) {
+		file << aInfoToSave[i];
+		file << '\n';
+		file << '\n';
+	}
+	
+    file.close();
+    
+    print("Archivo OK, salida CSV creada en "+ path);
+}
+
+void createCSVForUniqueJsonObject(string filePath, string *aParameters) {
 	
 	
     string path = getBasePath(filePath) + "Formateada.csv";
     
 	std::ofstream file(path.c_str());
-	
+  
 	string data = aParameters[0] + WHITE_SPACE + aParameters[1] +COMMA + WHITE_SPACE + aParameters[2] + WHITE_SPACE +
 				  aParameters[3] + WHITE_SPACE + "<" + aParameters[4] + ">"+ COMMA + WHITE_SPACE + aParameters[5] + COMMA + WHITE_SPACE +
 	 			  aParameters[6] + COMMA +  WHITE_SPACE + aParameters[7] + COMMA +  WHITE_SPACE + aParameters[8] + WHITE_SPACE + aParameters[9] +
@@ -652,6 +703,97 @@ string checkStructureOfJSON(string json) {
 }
 
 /* 
+	Este flujo se inicia al momento de tener un JSONObject definido
+	tomara los parametros y se encargara de enviarlos a otro sitio para
+	procesar la data en excel
+   
+  @Params
+  filePath : direccion donde se encuentra el archivo de entrada
+  json : string con la data a parsear 
+  aObjectsLenght: int que indica la cantidad de items del array json para recorrerlo
+*/
+void getDataOfJsonObjectFlow(string filePath, string *json, int aObjectsLenght) {
+	string aInfoToSave[aObjectsLenght];
+	int aInfoToSaveLenght = 0;
+	string *aParameters;
+	
+	for (int i = 0; i <= aObjectsLenght-1; i++) {	
+		aParameters = getArrayOfParameters(getOcurrecePositions(json[i]), json[i]);
+			
+		if(isDataRight(aParameters)) {
+		 	aInfoToSave[i] = getDataToWriteInExcel(aParameters);
+		 	aInfoToSaveLenght++;
+		}else{
+		 	print(ERROR_INVALID_JSON);
+		 	return;
+		}
+	}
+	createCSV(filePath, aInfoToSave, aInfoToSaveLenght);
+}
+
+
+void getDataOfUniqueJsonObjectFlow(string filePath, string json) {
+	string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
+	    
+    if(isDataRight(aParameters)) {
+    	createCSVForUniqueJsonObject(filePath, aParameters);
+	}else{
+		print(ERROR_INVALID_JSON);
+	}
+}
+
+/* 
+	Este flujo se inicia al momento de tener un JSONARRAY el mismo 
+	recorre todo el string y separa el array en objetos que seran 
+	utlizados luego
+   
+  @Params
+  filePath : direccion donde se encuentra el archivo de entrada
+  json : string con la data a parsear 
+*/
+void getDataOfJsonArrayFlow(string filePath, string json) {
+
+	int quantityOfDelimitiersOpen = 0;
+	int quantityOfDelimitiersClosed = 0;
+	int positionObjectInitial = 0;
+	int positionObjectFinal = 0;
+	int aObjectsLenght = 0;
+	string aObjects[100];
+	
+	for (int i = 0; i < json.length(); i++) {
+		char aux = json[i];
+	  	
+	  	if(aux == '{') {
+	  		if(positionObjectInitial == 0){
+	  			positionObjectInitial = i;	
+			}
+  			quantityOfDelimitiersOpen++;
+		}	
+		
+		if(aux == '}') {
+			quantityOfDelimitiersClosed++;
+		}
+		
+		if(quantityOfDelimitiersOpen == 5 && quantityOfDelimitiersClosed == 5) {
+			positionObjectFinal = i;
+		
+			string object = json.substr (positionObjectInitial, positionObjectFinal - positionObjectInitial); 
+			aObjects[aObjectsLenght] = object;
+			quantityOfDelimitiersOpen = 0;
+			quantityOfDelimitiersClosed = 0;
+			positionObjectInitial = 0;
+			positionObjectFinal = 0;
+			aObjectsLenght++;
+		}
+	}	
+	
+	if(aObjectsLenght > 0) {
+		getDataOfJsonObjectFlow(filePath, aObjects, aObjectsLenght);	
+	}
+	
+}
+
+/* 
 	Metodo encargado de verificar la estructura de los objetos y las llaves
 	en caso de que no coincidan devolvera un error
    
@@ -667,13 +809,13 @@ void initFlowParseJson(string filePath, string json) {
 		string jsonErrors = checkStructureOfJSON(json);
 		
 		if(jsonErrors == "") {	
-			string *aParameters = getArrayOfParameters(getOcurrecePositions(json), json);
-		    
-		    if(isDataRight(aParameters)) {
-		    	createCSV(filePath, aParameters);
+		
+			if(isJsonArray(json)){
+				getDataOfJsonArrayFlow(filePath, json);
 			}else{
-				print(ERROR_INVALID_JSON);
+				getDataOfUniqueJsonObjectFlow(filePath, json);
 			}
+					
 		}else{
 			print(jsonErrors);
 		}
